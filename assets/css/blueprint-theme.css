@@ -1,0 +1,880 @@
+/* ================================================================
+   DeKukis — Results Animation System
+   ================================================================ */
+
+/* --- Keyframes --- */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scanLine {
+    0%   { clip-path: inset(0 100% 0 0); }
+    100% { clip-path: inset(0 0% 0 0); }
+}
+
+@keyframes kpiGlow {
+    0%   { text-shadow: none; }
+    50%  { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+    100% { text-shadow: none; }
+}
+
+@keyframes borderPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(0, 218, 243, 0.5); }
+    70%  { box-shadow: 0 0 0 8px rgba(0, 218, 243, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 218, 243, 0); }
+}
+
+/* --- Reveal System --- */
+.anim-reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.anim-reveal.anim-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- KPI Cards — glow after counter finishes --- */
+.kpi-card {
+    animation: borderPulse 1.8s ease-out 0.4s 1 forwards;
+}
+
+/* --- KPI value glow during counting --- */
+.kpi-value.counter {
+    display: inline-block;
+    animation: kpiGlow 1.8s ease-out 0.4s 1 forwards;
+}
+
+/* --- Button loading state --- */
+.btn-loading {
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-idle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* --- BEP chart card scan-line reveal --- */
+.bep-chart-wrap canvas {
+    animation: scanLine 2s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
+}
+
+/* Right card — flex column so button anchors to bottom */
+.results-card {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Analyze Bazaar button — always pinned to bottom of right card */
+.analyze-master-btn {
+    margin-top: auto !important;
+    flex-shrink: 0 !important;
+}
+
+/* ================================================================
+   Analysis Action Bar — Save + Recalculate
+   ================================================================ */
+.analysis-action-bar {
+    display: flex !important;
+    gap: 10px !important;
+    margin-top: auto !important;
+    flex-shrink: 0 !important;
+    padding-top: 16px !important;
+    border-top: 1px solid var(--bp-border-subtle) !important;
+}
+
+.action-btn {
+    flex: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 13px 16px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-family: var(--bp-font-head) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    transition: all 0.18s ease !important;
+}
+
+/* Save — solid cyan */
+.action-btn-save {
+    background: var(--bp-cyan) !important;
+    color: #001f24 !important;
+    box-shadow: 0 0 20px var(--bp-cyan-glow) !important;
+}
+.action-btn-save:hover {
+    background: #9cf0ff !important;
+    box-shadow: 0 0 36px rgba(0, 218, 243, 0.5) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Recalculate — ghost outline */
+.action-btn-recalc {
+    background: transparent !important;
+    color: var(--bp-text-muted) !important;
+    border: 1px solid var(--bp-border) !important;
+}
+.action-btn-recalc:hover {
+    border-color: var(--bp-cyan) !important;
+    color: var(--bp-cyan) !important;
+    background: var(--bp-cyan-dim) !important;
+}
+
+/* ================================================================
+   DeKukis — Technical Blueprint Theme
+   Overrides style.css with the new blueprint design system.
+   ================================================================ */
+
+
+/* ---- Design Tokens ---- */
+:root {
+    --bp-bg:           #003366;
+    --bp-panel:        rgba(26, 26, 27, 0.92);
+    --bp-panel-solid:  #1a1a1b;
+    --bp-surface-low:  #0e0e0f;
+    --bp-surface:      #1f1f20;
+    --bp-surface-high: #2a2a2b;
+    --bp-border:       rgba(255, 255, 255, 0.15);
+    --bp-border-subtle: rgba(255, 255, 255, 0.07);
+    --bp-cyan:         #00daf3;
+    --bp-cyan-dim:     rgba(0, 218, 243, 0.15);
+    --bp-cyan-glow:    rgba(0, 218, 243, 0.25);
+    --bp-orange:       #ffb778;
+    --bp-orange-deep:  #fd9000;
+    --bp-orange-glow:  rgba(253, 144, 0, 0.3);
+    --bp-text:         #e5e2e3;
+    --bp-text-muted:   #8d919a;
+    --bp-text-dim:     #43474f;
+    --bp-grid:         rgba(255, 255, 255, 0.07);
+    --bp-font-head:    'Space Grotesk', 'Inter', sans-serif;
+    --bp-font-body:    'Inter', sans-serif;
+    --bp-font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ================================================================
+   GLOBAL — Body & Reset
+   ================================================================ */
+body {
+    background-color: var(--bp-bg) !important;
+    background-image:
+        linear-gradient(var(--bp-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bp-grid) 1px, transparent 1px) !important;
+    background-size: 22px 22px !important;
+    background-attachment: fixed !important;
+    color: var(--bp-text) !important;
+    font-family: var(--bp-font-body) !important;
+}
+
+/* ================================================================
+   APP SHELL
+   ================================================================ */
+.app-shell {
+    min-height: 100vh;
+    background: transparent !important;
+}
+
+.app-shell::before,
+.app-shell::after {
+    display: none !important; /* Remove old space-bg image overlays */
+}
+
+/* ================================================================
+   SIDEBAR — Blueprint Edition
+   ================================================================ */
+.sidebar {
+    background: rgba(19, 19, 20, 0.97) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-right: 1px solid var(--bp-border) !important;
+    width: 250px !important;
+    min-width: 250px !important;
+    height: 100vh !important;
+    position: sticky !important;
+    top: 0 !important;
+    overflow-y: auto !important;
+    z-index: 40 !important;
+}
+
+/* Brand */
+.sidebar-brand {
+    border-bottom: 1px solid var(--bp-border) !important;
+    padding-bottom: 20px !important;
+    margin-bottom: 8px !important;
+}
+
+.brand-icon {
+    border-radius: 0 !important;
+    background: linear-gradient(135deg, var(--bp-orange-deep), #c97400) !important;
+    box-shadow: 0 0 20px var(--bp-orange-glow) !important;
+}
+
+.brand-name {
+    font-family: var(--bp-font-head) !important;
+    font-weight: 900 !important;
+    font-size: 16px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    background: linear-gradient(135deg, var(--bp-cyan) 0%, #ffffff 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+.brand-tag {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 9px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.12em !important;
+    color: var(--bp-text-muted) !important;
+}
+
+/* Nav items */
+.nav-item {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    border-radius: 0 !important;
+    border-left: 3px solid transparent !important;
+    padding: 12px 16px !important;
+    color: var(--bp-text-muted) !important;
+    transition: all 0.15s ease !important;
+}
+
+.nav-item:hover {
+    background: rgba(0, 218, 243, 0.06) !important;
+    color: var(--bp-cyan) !important;
+    border-left-color: rgba(0, 218, 243, 0.4) !important;
+}
+
+.nav-item.active {
+    background: rgba(0, 57, 65, 0.4) !important;
+    color: var(--bp-cyan) !important;
+    border-left-color: var(--bp-cyan) !important;
+    font-weight: 700 !important;
+    box-shadow: inset 0 0 20px rgba(0, 218, 243, 0.05) !important;
+}
+
+/* History section */
+.sidebar-history h4 {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 9px !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
+    color: var(--bp-text-dim) !important;
+}
+
+.history-item {
+    border-bottom: 1px solid var(--bp-border-subtle) !important;
+    padding: 10px 0 !important;
+}
+
+.history-name {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 10px !important;
+    color: var(--bp-text) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+}
+
+.history-profit {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+}
+
+.profit-pos { color: var(--bp-cyan) !important; }
+.profit-neg { color: #ff6b6b !important; }
+
+/* Sidebar footer */
+.sidebar-user-avatar {
+    border-radius: 0 !important;
+    background: var(--bp-cyan-dim) !important;
+    border: 1px solid var(--bp-cyan) !important;
+    color: var(--bp-cyan) !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+}
+
+.sidebar-user-name {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 11px !important;
+    color: var(--bp-text) !important;
+}
+
+.sidebar-user-role {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 9px !important;
+    color: var(--bp-text-muted) !important;
+}
+
+.sidebar-logout-btn {
+    border-radius: 0 !important;
+    border: 1px solid var(--bp-border) !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    color: var(--bp-text-muted) !important;
+    transition: all 0.15s ease !important;
+}
+
+.sidebar-logout-btn:hover {
+    border-color: var(--bp-cyan) !important;
+    color: var(--bp-cyan) !important;
+    background: var(--bp-cyan-dim) !important;
+}
+
+/* ================================================================
+   MAIN — Content Area
+   ================================================================ */
+.main {
+    background: transparent !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* ================================================================
+   HEADER
+   ================================================================ */
+.header {
+    background: rgba(10, 14, 26, 0.85) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid var(--bp-border) !important;
+    border-left: 3px solid var(--bp-cyan) !important;
+    padding: 24px 36px !important;
+}
+
+.header h1 {
+    font-family: var(--bp-font-head) !important;
+    font-size: 22px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    background: linear-gradient(135deg, #ffffff 30%, var(--bp-cyan) 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+.header-sub {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.12em !important;
+    color: var(--bp-text-muted) !important;
+    margin-top: 4px !important;
+}
+
+/* ================================================================
+   CARDS — Blueprint Panel Style
+   ================================================================ */
+.card {
+    background: var(--bp-panel) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid var(--bp-border) !important;
+    border-radius: 0 !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(0, 218, 243, 0.02) !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+/* Crosshair corner markers */
+.card::before,
+.card::after {
+    content: '' !important;
+    position: absolute !important;
+    z-index: 10 !important;
+    pointer-events: none !important;
+}
+
+/* top-left */
+.card::before {
+    top: -1px !important;
+    left: -1px !important;
+    width: 14px !important;
+    height: 14px !important;
+    border-top: 2px solid var(--bp-cyan) !important;
+    border-left: 2px solid var(--bp-cyan) !important;
+}
+
+/* top-right  */
+.card::after {
+    top: -1px !important;
+    right: -1px !important;
+    width: 14px !important;
+    height: 14px !important;
+    border-top: 2px solid var(--bp-cyan) !important;
+    border-right: 2px solid var(--bp-cyan) !important;
+}
+
+/* We use a wrapper pseudo to get bottom corners via JS-free CSS trick */
+.card .card-corner-bl,
+.card .card-corner-br {
+    display: block !important;
+    position: absolute !important;
+    bottom: -1px !important;
+    width: 14px !important;
+    height: 14px !important;
+    pointer-events: none !important;
+}
+.card .card-corner-bl { left: -1px !important; border-bottom: 2px solid var(--bp-cyan) !important; border-left: 2px solid var(--bp-cyan) !important; }
+.card .card-corner-br { right: -1px !important; border-bottom: 2px solid var(--bp-cyan) !important; border-right: 2px solid var(--bp-cyan) !important; }
+
+/* Card Title */
+.card-title {
+    font-family: var(--bp-font-head) !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.12em !important;
+    color: var(--bp-text) !important;
+    border-bottom: 1px solid var(--bp-border-subtle) !important;
+    padding-bottom: 14px !important;
+    margin-bottom: 20px !important;
+}
+
+.card-title i {
+    color: var(--bp-cyan) !important;
+}
+
+/* ================================================================
+   FORM SECTION LABELS
+   ================================================================ */
+.form-section-title {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 9px !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
+    color: var(--bp-text-dim) !important;
+    border-left: 2px solid var(--bp-border) !important;
+    padding-left: 8px !important;
+}
+
+.form-section-title i {
+    color: var(--bp-cyan) !important;
+}
+
+/* ================================================================
+   INPUTS — Technical "Underline" Style
+   ================================================================ */
+.form-group label {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    color: var(--bp-text-muted) !important;
+}
+
+.form-group input,
+.form-group select,
+.form-textarea {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--bp-text-muted) !important;
+    border-radius: 0 !important;
+    padding: 8px 0 !important;
+    color: var(--bp-cyan) !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    width: 100% !important;
+    outline: none !important;
+    transition: border-color 0.15s ease !important;
+}
+
+.form-group input:focus,
+.form-textarea:focus {
+    border-bottom: 2px solid var(--bp-cyan) !important;
+    box-shadow: 0 4px 12px rgba(0, 218, 243, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.form-group input::placeholder,
+.form-textarea::placeholder {
+    color: var(--bp-text-dim) !important;
+    font-weight: 400 !important;
+}
+
+/* ================================================================
+   PRODUCT ROWS
+   ================================================================ */
+.product-row {
+    background: rgba(10, 10, 11, 0.5) !important;
+    border: 1px solid var(--bp-border-subtle) !important;
+    border-radius: 0 !important;
+    padding: 16px !important;
+}
+
+.product-row-num {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    color: var(--bp-orange) !important;
+}
+
+.add-product-btn {
+    border-radius: 0 !important;
+    border: 1px dashed var(--bp-border) !important;
+    border-color: var(--bp-text-dim) !important;
+    color: var(--bp-text-muted) !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    background: transparent !important;
+    transition: all 0.15s ease !important;
+}
+
+.add-product-btn:hover {
+    border-color: var(--bp-cyan) !important;
+    color: var(--bp-cyan) !important;
+    background: var(--bp-cyan-dim) !important;
+}
+
+/* ================================================================
+   SUBMIT / ACTION BUTTONS
+   ================================================================ */
+.submit-btn,
+.analyze-master-btn {
+    background: var(--bp-cyan) !important;
+    color: #001f24 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-family: var(--bp-font-head) !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.14em !important;
+    padding: 16px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 0 30px var(--bp-cyan-glow) !important;
+}
+
+.submit-btn:hover,
+.analyze-master-btn:hover {
+    background: #9cf0ff !important;
+    transform: none !important;
+    box-shadow: 0 0 50px rgba(0, 218, 243, 0.5) !important;
+}
+
+/* ================================================================
+   DECISION SUPPORT PANEL (right card idle state)
+   ================================================================ */
+.decision-support-panel {
+    gap: 20px !important;
+}
+
+.mascot-hero {
+    padding: 12px 0 0 !important;
+}
+
+.mascot-title {
+    font-family: var(--bp-font-head) !important;
+    font-size: 20px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    color: #ffffff !important;
+}
+
+.mascot-sub {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 11px !important;
+    color: var(--bp-text-muted) !important;
+    letter-spacing: 0.04em !important;
+}
+
+/* Tips */
+.decision-tips {
+    gap: 8px !important;
+}
+
+.tip {
+    background: rgba(10, 10, 11, 0.6) !important;
+    border: 1px solid var(--bp-border-subtle) !important;
+    border-left: 3px solid var(--bp-text-dim) !important;
+    border-radius: 0 !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 11px !important;
+    color: var(--bp-text-muted) !important;
+    letter-spacing: 0.03em !important;
+    padding: 10px 14px !important;
+}
+
+.tip i {
+    color: var(--bp-orange) !important;
+    font-size: 16px !important;
+}
+
+/* Industry Benchmarks */
+.benchmarks-label {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 9px !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
+    color: var(--bp-text-dim) !important;
+    border-left: 2px solid var(--bp-border) !important;
+    padding-left: 8px !important;
+}
+
+.benchmark-card {
+    background: var(--bp-surface-low) !important;
+    border: 1px solid var(--bp-border-subtle) !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 14px 16px !important;
+}
+
+.benchmark-icon {
+    border-radius: 0 !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 16px !important;
+}
+
+.benchmark-green { background: rgba(0, 218, 243, 0.12) !important; color: var(--bp-cyan) !important; }
+.benchmark-red   { background: rgba(255, 107, 107, 0.12) !important; color: #ff6b6b !important; }
+.benchmark-yellow { background: rgba(253, 144, 0, 0.12) !important; color: var(--bp-orange-deep) !important; }
+
+.benchmark-info span {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 9px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    color: var(--bp-text-dim) !important;
+}
+
+.benchmark-info strong {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.02em !important;
+}
+
+.benchmark-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+/* ================================================================
+   RESULTS PANEL — KPI Cards, Verdict, Breakdown
+   ================================================================ */
+.verdict-banner {
+    border-radius: 0 !important;
+    border-left: 4px solid currentColor !important;
+}
+
+.verdict-banner h2 {
+    font-family: var(--bp-font-head) !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+}
+
+.verdict-banner p {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 11px !important;
+}
+
+.kpi-card {
+    background: var(--bp-surface-low) !important;
+    border: 1px solid var(--bp-border-subtle) !important;
+    border-radius: 0 !important;
+}
+
+.kpi-label {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 9px !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: var(--bp-text-muted) !important;
+}
+
+.kpi-value {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+}
+
+.kpi-unit {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 9px !important;
+    color: var(--bp-text-dim) !important;
+}
+
+.kpi-positive .kpi-value { color: var(--bp-cyan) !important; }
+.kpi-negative .kpi-value { color: #ff6b6b !important; }
+
+/* Breakdown table */
+.breakdown h3,
+.reality-check h3 {
+    font-family: var(--bp-font-head) !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    color: var(--bp-text-muted) !important;
+}
+
+.label-cell {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 12px !important;
+    color: var(--bp-text-muted) !important;
+}
+
+.value-cell {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: var(--bp-text) !important;
+}
+
+.text-safe    { color: var(--bp-cyan) !important; }
+.text-danger  { color: #ff6b6b !important; }
+.text-warning { color: var(--bp-orange-deep) !important; }
+
+.reality-check {
+    border-radius: 0 !important;
+    background: var(--bp-surface-low) !important;
+    border: 1px solid var(--bp-border-subtle) !important;
+}
+
+.reality-row span:first-child {
+    font-family: var(--bp-font-mono) !important;
+    font-size: 11px !important;
+}
+
+/* Suggestions */
+.suggestion-card {
+    border-radius: 0 !important;
+    border-left-width: 3px !important;
+}
+
+/* ================================================================
+   ALERTS
+   ================================================================ */
+.alert {
+    border-radius: 0 !important;
+    border-left-width: 3px !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 12px !important;
+}
+
+/* ================================================================
+   BACK LINK & STATUS BADGES
+   ================================================================ */
+.back-link {
+    border-radius: 0 !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+}
+
+.status-badge {
+    border-radius: 0 !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 9px !important;
+    letter-spacing: 0.1em !important;
+}
+
+/* ================================================================
+   AI HELPER WIDGET — Blueprint Skin
+   ================================================================ */
+.ai-helper-btn {
+    border-radius: 0 !important;
+    background: linear-gradient(135deg, var(--bp-panel-solid), #0a0a0b) !important;
+    border: 1px solid var(--bp-border) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--bp-cyan-glow) !important;
+}
+
+.ai-helper-btn:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 20px var(--bp-cyan-glow) !important;
+}
+
+.ai-notification-badge {
+    border-radius: 0 !important;
+    background: var(--bp-orange-deep) !important;
+    box-shadow: 0 0 12px var(--bp-orange-glow) !important;
+    font-family: var(--bp-font-mono) !important;
+}
+
+.ai-helper-panel {
+    border-radius: 0 !important;
+    background: var(--bp-panel) !important;
+    border: 1px solid var(--bp-border) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7) !important;
+}
+
+.ai-panel-header {
+    border-radius: 0 !important;
+    background: var(--bp-surface) !important;
+    border-bottom: 1px solid var(--bp-border-subtle) !important;
+    font-family: var(--bp-font-head) !important;
+}
+
+.ai-input {
+    border-radius: 0 !important;
+    background: var(--bp-surface-low) !important;
+    border: 1px solid var(--bp-border-subtle) !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 12px !important;
+    color: var(--bp-text) !important;
+}
+
+/* ================================================================
+   SCROLLBAR — Blueprint Style
+   ================================================================ */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bp-surface-low);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bp-cyan);
+    border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9cf0ff;
+}
+
+/* ================================================================
+   TOOLTIP
+   ================================================================ */
+.tooltip::after {
+    border-radius: 0 !important;
+    font-family: var(--bp-font-mono) !important;
+    font-size: 10px !important;
+    background: var(--bp-surface-low) !important;
+    border: 1px solid var(--bp-border) !important;
+}
